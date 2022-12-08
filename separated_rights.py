@@ -120,6 +120,7 @@ while (not exit):
 
                 if (rights_index in range(1,4) and to_user_index in range(0, len(USERS) + 1)):
                     access_rights.transfer_rights(to_user_index, rights_index, object_index)
+                    print('Операция успешно завершена')
                 else: 
                     raise Exception('Неверный индекс прав или пользователя')
 
