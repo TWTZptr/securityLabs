@@ -53,17 +53,43 @@ class AccessRights:
 
         return None
 
-def handle_user_action(userIndex):
+    def can_user_perform_action(self, user_index, action_index, object_index):
+        required_access_type = self.map_action_index_to_access_type(action_index)
+
+        if (self.access_matrix[user_index][object_index] in [required_access_type, AccessTypes.FULL]):
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def map_action_index_to_access_type(action_index):
+        if (action_index == 1): return AccessTypes.READ
+        if (action_index == 2): return AccessTypes.WRITE
+        if (action_index == 3): return AccessTypes.TRANSFER
+
+    def transfer_rights(self, to, access_type_index, object_index):
+        right = self.map_action_index_to_access_type(access_type_index)
+        self.access_matrix[to][object_index] = right
+
+def handle_user_action():
     print('Введите действие, которое необходимо выполнить:')
     print('1 - чтение')
     print('2 - запись')
     print('3 - передача прав')
-    user_action = int(input(userIndex))
+    user_action_index = int(input())
 
-    if (user_action > 3 or user_action < 0):
-        print('Неверное действие')
-        return
+    if (not user_action_index in range(1,4)):
+        raise Exception('Неверное действие')
     
+    print()
+    print('Введите индекс объекта, над которым выполняется действие')
+    
+    object_index = int(input())
+
+    if (not object_index in range(0, len(OBJECTS) + 1)):
+        raise Exception('Файла с таким нидексом не существует')
+    
+    return (user_action_index, object_index)
 
 access_rights = AccessRights()
 
@@ -72,13 +98,35 @@ exit = False
 while (not exit):
     print(str(access_rights))
     print('Введите индекс пользователя, за которого необходимо войти')
-    userIndex = int(input())
+    user_index = int(input())
     print('Введите пароль')
     password = input()
     print()
-    username = access_rights.try_login(userIndex, password)
+    username = access_rights.try_login(user_index, password)
     
     if (username):
-        handle_user_action(userIndex)
+        print('Вы вошли как ' + username)
+        (user_action_index, object_index) = handle_user_action()
+        successful = access_rights.can_user_perform_action(user_index, user_action_index, object_index)
+
+        if (successful):
+            print('Доступ разрешен')
+
+            if (AccessRights.map_action_index_to_access_type(user_action_index) == AccessTypes.TRANSFER):
+                print('Какие права выдать пользователю?')
+                rights_index = int(input())
+                print('Введите индекс пользователя, которому необходимо выдать права')
+                to_user_index = int(input())
+
+                if (rights_index in range(1,4) and to_user_index in range(0, len(USERS) + 1)):
+                    access_rights.transfer_rights(to_user_index, rights_index, object_index)
+                else: 
+                    raise Exception('Неверный индекс прав или пользователя')
+
+        else:
+            print('Доступ запрещен')
+
     else:
         print('Неверный индекс пользователя/пароль')
+        
+    print('\n\n')
